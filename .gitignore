@@ -1,0 +1,15 @@
+.venv/
+.tmp/
+.chrome_profile/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.env
+traces/*
+!traces/.gitkeep
+screenshots/*
+!screenshots/.gitkeep
+logs/*
+!logs/.gitkeep

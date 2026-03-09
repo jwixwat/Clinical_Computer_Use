@@ -1,0 +1,9 @@
+{
+  "session_id": "redacted-session-001",
+  "task_name": "insurance_form_draft",
+  "event": {
+    "type": "checkpoint",
+    "summary": "Redacted fixture for replay scaffold validation."
+  }
+}
+

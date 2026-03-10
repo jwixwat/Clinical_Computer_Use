@@ -28,4 +28,11 @@ That blueprint is the source of truth for:
 ## Notes
 
 - This project handles PHI-bearing workflows. Treat traces/screenshots/artifacts as sensitive outputs.
+- Artifact lifecycle baseline and cleanup workflow: [docs/PHI_ARTIFACT_POLICY.md](docs/PHI_ARTIFACT_POLICY.md)
+- Constitutional and governance docs:
+  - [docs/OPERATING_CHARTER.md](docs/OPERATING_CHARTER.md)
+  - [docs/RUN_LIFECYCLE_AND_ACTION_SCOPE.md](docs/RUN_LIFECYCLE_AND_ACTION_SCOPE.md)
+  - [docs/BEHAVIOR_CHANGE_GOVERNANCE.md](docs/BEHAVIOR_CHANGE_GOVERNANCE.md)
+  - [docs/PHI_FIXTURE_AND_REPLAY_POLICY.md](docs/PHI_FIXTURE_AND_REPLAY_POLICY.md)
+  - [docs/CHECKPOINT_AND_AUTONOMY_POLICY.md](docs/CHECKPOINT_AND_AUTONOMY_POLICY.md)
 - No autonomous finalization (submit/sign/fax/send/bill) in current posture.

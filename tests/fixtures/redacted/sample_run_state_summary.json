@@ -1,0 +1,20 @@
+﻿{
+  "session_id": "redacted-session-n1",
+  "task_name": "insurance_form_draft",
+  "draft_only": true,
+  "objective_type": "find",
+  "required_artifact_classes": ["external_document"],
+  "acceptable_artifact_classes": ["pdf_form", "scanned_form"],
+  "disallowed_artifact_classes": ["chart_note"],
+  "artifact_match_mode": "family",
+  "preferred_surfaces": ["documents", "results", "chart_home"],
+  "bound_patient_context": {
+    "intended_patient_target": "redacted-patient",
+    "bound_patient_label": "redacted-patient",
+    "bound_patient_identifier": "redacted-patient",
+    "last_verified_at": "2026-03-09T00:00:00Z",
+    "verification_source": "calendar_bind",
+    "verification_confidence": 0.7,
+    "context_valid": true
+  }
+}

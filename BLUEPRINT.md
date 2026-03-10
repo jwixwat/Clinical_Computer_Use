@@ -1,4 +1,4 @@
-# Clinical Computer Use Agent - Next Build Coordination
+﻿# Clinical Computer Use Agent - Next Build Coordination
 
 This document coordinates the **next build** of `clinical_computer_use` starting from the repo's current state: a working supervised harness with deterministic bootstrap/login/patient binding, chart-bounded safety scaffolding, trace capture, screenshot observation, and a first constrained in-chart action loop.
 
@@ -179,53 +179,53 @@ Version labels begin from **the current repo state**, not from project origin.
 
 #### N0.0 Build charter for the next phase
 
-* [ ] Publish a concise current-state charter: what the deterministic kernel owns vs what the agentic layer should own.
-* [ ] Publish the anti-goals and invariants above as merge-gating criteria.
-* [ ] Explicitly state that the next build is about **stateful evidence pursuit**, not more selector branching.
+* [x] Publish a concise current-state charter: what the deterministic kernel owns vs what the agentic layer should own.
+* [x] Publish the anti-goals and invariants above as merge-gating criteria.
+* [x] Explicitly state that the next build is about **stateful evidence pursuit**, not more selector branching.
 * Acceptance: the repo agent can distinguish "preserve kernel" from "extend agentic middle layer" without ambiguity.
 * Complexity: **S**.
 
 #### N0.1 Promote session into a resumable run object
 
-* [ ] Define the run lifecycle: start, continue, summarize, approve next risky action, stop, archive, resume.
-* [ ] Make run-local working memory first-class: task contract, search ledger, evidence ledger, pending approvals, rejected candidates, last checkpoint.
-* [ ] Ensure resumptions do not depend on hidden model memory alone.
+* [x] Define the run lifecycle: start, continue, summarize, approve next risky action, stop, archive, resume.
+* [x] Make run-local working memory first-class: task contract, search ledger, evidence ledger, pending approvals, rejected candidates, last checkpoint.
+* [x] Ensure resumptions do not depend on hidden model memory alone.
 * Acceptance: a paused run can be resumed by another process or a later turn without losing what the system already searched or rejected.
 * Complexity: **M**.
 
 #### N0.2 Action taxonomy and risk ladder
 
-* [ ] Publish a common action taxonomy that separates navigation/search/open from drafting/editing, persistence, and externalization.
-* [ ] Define a stable risk ladder to use everywhere:
+* [x] Publish a common action taxonomy that separates navigation/search/open from drafting/editing, persistence, and externalization.
+* [x] Define a stable risk ladder to use everywhere:
   * Tier 0 = navigate / search / read / open artifact
   * Tier 1 = draft / edit but unsaved
   * Tier 2 = save / persist chart state
   * Tier 3 = transmit / finalize / sign / fax / send / approve / bill
-* [ ] Clarify which tiers are in current scope and which remain out of scope.
+* [x] Clarify which tiers are in current scope and which remain out of scope.
 * Acceptance: every allowed or blocked action can be categorized consistently before execution.
 * Complexity: **S/M**.
 
 #### N0.3 Versioning discipline for agent behavior
 
-* [ ] Link every run to prompt versions, tool surface versions, policy bundle version, model choice, and role-specific operating settings.
-* [ ] Record which role configuration was used when different sub-agents or model settings are introduced.
-* [ ] Treat prompt changes as semantic changes, not just wording edits.
+* [x] Link every run to prompt versions, tool surface versions, policy bundle version, model choice, and role-specific operating settings.
+* [x] Record which role configuration was used when different sub-agents or model settings are introduced.
+* [x] Treat prompt changes as semantic changes, not just wording edits.
 * Acceptance: behavior drift can be traced to specific prompt/tool/policy/model changes.
 * Complexity: **M**.
 
 #### N0.4 PHI-aware operational housekeeping
 
-* [ ] Define retention and cleanup policy for screenshots, traces, extracted text, and other captured artifacts.
-* [ ] Define who or what processes may access these artifacts.
-* [ ] Define a de-identified fixture / replay policy so regression work does not depend on live PHI.
-* [ ] Define explicit rules for what may leave the isolated clinical execution path.
+* [x] Define retention and cleanup policy for screenshots, traces, extracted text, and other captured artifacts.
+* [x] Define who or what processes may access these artifacts.
+* [x] Define a de-identified fixture / replay policy so regression work does not depend on live PHI.
+* [x] Define explicit rules for what may leave the isolated clinical execution path.
 * Acceptance: operational artifact handling is intentional rather than accidental.
 * Complexity: **M**.
 
 #### N0.5 Human handoff packet standard
 
-* [ ] Define the standard handoff shape for paused or review-bound tasks.
-* [ ] Include: task understanding, current patient context, where the agent looked, what was found, what remains uncertain, what action is next, and whether approval is needed.
+* [x] Define the standard handoff shape for paused or review-bound tasks.
+* [x] Include: task understanding, current patient context, where the agent looked, what was found, what remains uncertain, what action is next, and whether approval is needed.
 * Acceptance: humans receive consistent, short, evidence-linked handoffs rather than arbitrary narrative dumps.
 * Complexity: **S/M**.
 
@@ -246,7 +246,7 @@ Version labels begin from **the current repo state**, not from project origin.
 
 #### N1.0 Task contract fields
 
-* [ ] Define the minimum contract fields for every run:
+* [x] Define the minimum contract fields for every run:
   * patient target
   * objective type (`find`, `summarize`, `draft`, `annotate`, `fill`, etc.)
   * target artifact class
@@ -256,40 +256,40 @@ Version labels begin from **the current repo state**, not from project origin.
   * evidence requirements
   * completion test
   * approval boundaries
-* [ ] Treat missing or ambiguous fields as explicit uncertainty, not silent assumptions.
+* [x] Treat missing or ambiguous fields as explicit uncertainty, not silent assumptions.
 * Acceptance: the system can represent "find the external firearms form, not a note, Documents first, recent first" as structured task state.
 * Complexity: **M**.
 
 #### N1.1 Contract compilation from user intent
 
-* [ ] Add a contract-building step before the agent starts chart pursuit.
-* [ ] Make the system state what it believes the task is, what is missing, and what it will treat as non-goals.
-* [ ] Keep this compact enough to survive long runs.
+* [x] Add a contract-building step before the agent starts chart pursuit.
+* [x] Make the system state what it believes the task is, what is missing, and what it will treat as non-goals.
+* [x] Keep this compact enough to survive long runs.
 * Acceptance: the system starts from a concrete operational interpretation rather than a vague prose prompt.
 * Complexity: **M**.
 
 #### N1.2 User correction compiler
 
-* [ ] Accept natural free-text corrections from the user.
-* [ ] Translate those into structured state updates such as:
+* [x] Accept natural free-text corrections from the user.
+* [x] Translate those into structured state updates such as:
   * reject candidate X
   * mark `chart_note` as disallowed
   * raise Documents above Results
   * add / remove date floor
   * require human review before save
-* [ ] Preserve prior valid work rather than resetting from scratch.
+* [x] Preserve prior valid work rather than resetting from scratch.
 * Acceptance: corrections become durable state changes, not just extra chat history.
 * Complexity: **M/L**.
 
 #### N1.3 Checkpoint protocol
 
-* [ ] Define a standard checkpoint format with a small number of required fields:
+* [x] Define a standard checkpoint format with a small number of required fields:
   * what the agent thinks the task is
   * where it looked
   * what it found
   * why it is or is not done
   * the next safest one or two actions
-* [ ] Use checkpoints when:
+* [x] Use checkpoints when:
   * a likely candidate is found
   * a preferred surface is exhausted
   * the user correction changes the contract
@@ -300,9 +300,9 @@ Version labels begin from **the current repo state**, not from project origin.
 
 #### N1.4 Autonomy budget and context compaction
 
-* [ ] Define how many low-risk steps the agent may take between checkpoints.
-* [ ] Define how run history gets compacted into durable working memory instead of ballooning prompt context.
-* [ ] Ensure the summary of prior work is sufficient for continuation and replay.
+* [x] Define how many low-risk steps the agent may take between checkpoints.
+* [x] Define how run history gets compacted into durable working memory instead of ballooning prompt context.
+* [x] Ensure the summary of prior work is sufficient for continuation and replay.
 * Acceptance: long tasks remain coherent without either excessive interruption or context sprawl.
 * Complexity: **M/L**.
 
@@ -799,18 +799,18 @@ These gates are designed to prevent you from widening autonomy before the underl
 
 ### Gate to N1 (after N0)
 
-* [ ] Run state is resumable and explicit.
-* [ ] Action taxonomy and risk ladder are published and stable.
-* [ ] Prompt / tool / policy / model version linkage is recorded per run.
-* [ ] PHI-aware artifact handling rules are written down and usable.
-* [ ] Human handoff packet format exists.
+* [x] Run state is resumable and explicit.
+* [x] Action taxonomy and risk ladder are published and stable.
+* [x] Prompt / tool / policy / model version linkage is recorded per run.
+* [x] PHI-aware artifact handling rules are written down and usable.
+* [x] Human handoff packet format exists.
 
 ### Gate to N2 (after N1)
 
-* [ ] Task contract compilation works for real prompts.
-* [ ] User corrections produce structured state deltas rather than prompt-only drift.
-* [ ] Checkpoint protocol exists and is not too noisy.
-* [ ] Context compaction preserves enough information for continuation.
+* [x] Task contract compilation works for real prompts.
+* [x] User corrections produce structured state deltas rather than prompt-only drift.
+* [x] Checkpoint protocol exists and is not too noisy.
+* [x] Context compaction preserves enough information for continuation.
 
 ### Gate to N3 (after N2)
 
@@ -830,7 +830,7 @@ These gates are designed to prevent you from widening autonomy before the underl
 
 * [ ] Executor / verifier separation exists.
 * [ ] Candidate review includes a falsification step.
-* [ ] `finish` is hard-gated by completion logic.
+* [x] `finish` is hard-gated by completion logic.
 * [ ] Terminal states distinguish verified success from "needs review" and "not found after bounded search."
 
 ### Gate to N6 / N7 (after N5)
@@ -898,3 +898,4 @@ Once those are in place, the same underlying environment control will start beha
 * a better safety boundary at the point of risk
 
 That is the transition from a promising supervised harness to a genuinely useful, correction-tolerant clinical computer-use agent.
+

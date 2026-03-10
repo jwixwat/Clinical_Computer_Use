@@ -1,5 +1,9 @@
 .venv/
 .tmp/
+.tmp_pytest/
+.pytest_tmp/
+.test_tmp_*/
+pytest-cache-files-*/
 .chrome_profile/
 __pycache__/
 *.py[cod]

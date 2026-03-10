@@ -28,6 +28,7 @@ from ..config import (
     MYLE_PASSWORD,
     MYLE_USERNAME,
 )
+from ..schemas.contract_types import SurfaceType
 
 
 @dataclass
@@ -269,6 +270,49 @@ class PlaywrightHarness:
         self._wait_for_myle_app_state()
         page.wait_for_timeout(2000)
         self.state.active_url = page.url
+
+    def open_current_patient_results(self) -> None:
+        page = self.page
+        results_tab = page.locator("[data-cy='patientTab-results']").first
+        results_tab.wait_for(state="visible", timeout=10000)
+        results_tab.click()
+        self._wait_for_myle_app_state()
+        page.wait_for_timeout(2000)
+        self.state.active_url = page.url
+
+    def return_to_current_patient_home(self) -> None:
+        page = self.page
+        selectors = (
+            "[data-cy='patientTab-home']",
+            "[data-cy='patientTab-summary']",
+            "[data-cy='patientTab-overview']",
+            "[data-cy='patientTab-patient']",
+        )
+        for selector in selectors:
+            locator = page.locator(selector).first
+            if locator.count() > 0 and locator.is_visible():
+                locator.click()
+                self._wait_for_myle_app_state()
+                page.wait_for_timeout(1500)
+                self.state.active_url = page.url
+                return
+        raise RuntimeError("Could not find a chart-home control to restore patient home surface.")
+
+    def restore_surface_for_resume(self, target_surface: SurfaceType) -> bool:
+        try:
+            self.ensure_myle_ready()
+            if target_surface == SurfaceType.DOCUMENTS:
+                self.open_current_patient_documents()
+                return True
+            if target_surface == SurfaceType.RESULTS:
+                self.open_current_patient_results()
+                return True
+            if target_surface == SurfaceType.CHART_HOME:
+                self.return_to_current_patient_home()
+                return True
+        except Exception:
+            return False
+        return False
 
     def snapshot_actionable_elements(self) -> list[dict[str, str]]:
         page = self.page

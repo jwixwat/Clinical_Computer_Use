@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 import subprocess
 import time
-from typing import Optional
+from typing import Any, Optional
 from urllib.error import URLError
 from urllib.request import urlopen
 
@@ -29,6 +29,7 @@ from ..config import (
     MYLE_USERNAME,
 )
 from ..schemas.contract_types import SurfaceType
+from ..runtime.surfaces import ChartSurfaceState, resolve_surface_state
 
 
 @dataclass
@@ -129,6 +130,113 @@ class PlaywrightHarness:
 
     def current_url(self) -> str:
         return self.page.url or ""
+
+    @staticmethod
+    def _surface_selector_map() -> dict[str, str]:
+        return {
+            "calendar_nav": "[data-cy='nav-tab-calendar']",
+            "calendar_search": "input[data-cy='sidebar-patient-search'], input[placeholder='Search']",
+            "calendar_grid": ".k-scheduler-content, .k-event",
+            "system_documents_nav": "[data-cy='nav-tab-documents']",
+            "system_results_nav": "[data-cy='nav-tab-results']",
+            "patient_banner": "[data-cy='patient-banner-container']",
+            "chart_right_rail": "ul.vnav",
+            "patient_medicalsummary_tab": "[data-cy='patientTab-medicalsummary']",
+            "patient_medicalnote_tab": "[data-cy='patientTab-medicalnote']",
+            "patient_documents_tab": "[data-cy='patientTab-documents']",
+            "patient_results_tab": "[data-cy='patientTab-results']",
+            "patient_medication_tab": "[data-cy='patientTab-medication']",
+            "left_note_search": "input[data-cy='medicalNote-search']",
+            "summary_label": "label.MedicalSummary_medicalItemLabel__MAyez",
+            "note_block": ".note-block.medical-note-block",
+            "documents_row": "tbody.myle-table-row",
+            "documents_categories": ".DocumentsLabel, .BaseDocumentSearch_actionLinks__9ReV6, a[title='Received Documents']",
+            "results_row": "tbody.myle-table-row",
+            "result_review_notes_panel": "textarea[id^='lab_note_']",
+            "result_review_bottom_actions": "button.btn.btn-primary, button.btn.btn-default",
+            "result_detail_modal": "text=Result Details",
+            "medication_heading": "text=Medications",
+            "document_viewer_plugin": "#plugin, embed[type='application/x-google-chrome-pdf']",
+        }
+
+    def inspect_surface(self) -> ChartSurfaceState:
+        page = self.page
+        selector_map = self._surface_selector_map()
+        inspection = page.evaluate(
+            """
+            (selectorMap) => {
+              const isVisible = (el) => {
+                if (!el) return false;
+                const rect = el.getBoundingClientRect();
+                const style = window.getComputedStyle(el);
+                return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none";
+              };
+              const hits = {};
+              for (const [key, selector] of Object.entries(selectorMap)) {
+                if (selector.startsWith("text=")) {
+                  const wanted = selector.slice(5).toLowerCase();
+                  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
+                  let found = false;
+                  while (walker.nextNode()) {
+                    const node = walker.currentNode;
+                    const text = (node.innerText || node.textContent || "").trim().toLowerCase();
+                    if (text.includes(wanted) && isVisible(node)) {
+                      found = true;
+                      break;
+                    }
+                  }
+                  hits[key] = found;
+                  continue;
+                }
+                const nodes = Array.from(document.querySelectorAll(selector));
+                hits[key] = nodes.some((node) => isVisible(node));
+              }
+              const headingNodes = Array.from(document.querySelectorAll("h1, h2, h3, .note-block-header h3, label.MedicalSummary_medicalItemLabel__MAyez"));
+              const headings = headingNodes
+                .filter((node) => isVisible(node))
+                .map((node) => (node.innerText || node.textContent || "").replace(/\\s+/g, " ").trim())
+                .filter(Boolean)
+                .slice(0, 12);
+              const bodyText = (document.body?.innerText || "").replace(/\\s+/g, " ").trim();
+              const textSnippets = [];
+              for (const phrase of [
+                "All Documents",
+                "Results",
+                "FULL RESULTS",
+                "Back to Results",
+                "FOLLOW-UPS",
+                "Medications",
+                "Result Details",
+              ]) {
+                if (bodyText.toLowerCase().includes(phrase.toLowerCase())) {
+                  textSnippets.push(phrase);
+                }
+              }
+              return { selector_hits: hits, headings, text_snippets: textSnippets };
+            }
+            """,
+            selector_map,
+        )
+        selector_hits = inspection.get("selector_hits", {}) if isinstance(inspection, dict) else {}
+        headings = inspection.get("headings", []) if isinstance(inspection, dict) else []
+        text_snippets = inspection.get("text_snippets", []) if isinstance(inspection, dict) else []
+        state = resolve_surface_state(
+            url=self.current_url(),
+            selector_hits={str(key): bool(value) for key, value in selector_hits.items()},
+            headings=[str(item) for item in headings],
+            visible_text=[str(item) for item in text_snippets],
+        )
+        self.state.active_url = state.active_url
+        return state
+
+    def current_surface_state(self) -> ChartSurfaceState:
+        return self.inspect_surface()
+
+    def assert_surface(self, expected: SurfaceType) -> ChartSurfaceState:
+        state = self.inspect_surface()
+        if state.surface_type != expected:
+            raise RuntimeError(f"Expected surface '{expected.value}', found '{state.surface_type.value}'.")
+        return state
 
     def _wait_for_myle_app_state(self, timeout_ms: int = 20000) -> None:
         page = self.page
@@ -280,9 +388,37 @@ class PlaywrightHarness:
         page.wait_for_timeout(2000)
         self.state.active_url = page.url
 
+    def open_current_patient_medication(self) -> None:
+        page = self.page
+        medication_tab = page.locator("[data-cy='patientTab-medication']").first
+        medication_tab.wait_for(state="visible", timeout=10000)
+        medication_tab.click()
+        self._wait_for_myle_app_state()
+        page.wait_for_timeout(2000)
+        self.state.active_url = page.url
+
+    def open_current_patient_medical_note(self) -> None:
+        page = self.page
+        note_tab = page.locator("[data-cy='patientTab-medicalnote']").first
+        note_tab.wait_for(state="visible", timeout=10000)
+        note_tab.click()
+        self._wait_for_myle_app_state()
+        page.wait_for_timeout(2000)
+        self.state.active_url = page.url
+
+    def open_current_patient_medical_summary(self) -> None:
+        page = self.page
+        summary_tab = page.locator("[data-cy='patientTab-medicalsummary']").first
+        summary_tab.wait_for(state="visible", timeout=10000)
+        summary_tab.click()
+        self._wait_for_myle_app_state()
+        page.wait_for_timeout(2000)
+        self.state.active_url = page.url
+
     def return_to_current_patient_home(self) -> None:
         page = self.page
         selectors = (
+            "[data-cy='patientTab-medicalsummary']",
             "[data-cy='patientTab-home']",
             "[data-cy='patientTab-summary']",
             "[data-cy='patientTab-overview']",
@@ -301,11 +437,20 @@ class PlaywrightHarness:
     def restore_surface_for_resume(self, target_surface: SurfaceType) -> bool:
         try:
             self.ensure_myle_ready()
-            if target_surface == SurfaceType.DOCUMENTS:
+            if target_surface in {SurfaceType.DOCUMENTS, SurfaceType.PATIENT_DOCUMENTS}:
                 self.open_current_patient_documents()
                 return True
-            if target_surface == SurfaceType.RESULTS:
+            if target_surface in {SurfaceType.RESULTS, SurfaceType.PATIENT_RESULTS}:
                 self.open_current_patient_results()
+                return True
+            if target_surface in {SurfaceType.CHART_HOME, SurfaceType.MEDICAL_SUMMARY}:
+                self.open_current_patient_medical_summary()
+                return True
+            if target_surface == SurfaceType.MEDICAL_NOTE:
+                self.open_current_patient_medical_note()
+                return True
+            if target_surface == SurfaceType.PATIENT_MEDICATION:
+                self.open_current_patient_medication()
                 return True
             if target_surface == SurfaceType.CHART_HOME:
                 self.return_to_current_patient_home()

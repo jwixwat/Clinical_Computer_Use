@@ -28,7 +28,6 @@ from clinical_computer_use.runtime.ledgers import (
     SurfaceType,
     add_evidence_record,
     build_empty_ledgers,
-    infer_surface_from_url,
     next_step,
     note_search_episode,
 )
@@ -204,8 +203,10 @@ def run_browser_observation(task_name: str, user_prompt: str, target_url: str) -
         else:
             harness.open_url(target_url)
         screenshot_path = harness.capture_screenshot(session.screenshot_dir / "screen.png")
-        active_url = harness.state.active_url or harness.current_url()
-        surface = infer_surface_from_url(active_url)
+        surface_state = harness.inspect_surface()
+        active_url = surface_state.active_url
+        surface = surface_state.surface_type
+        state.latest_surface_state = surface_state
         append_event(
             session,
             "browser_screenshot_captured",
@@ -306,8 +307,10 @@ def run_myle_patient_bind(task_name: str, patient_query: str) -> PatientBindOutc
         harness.connect()
         harness.bind_patient_from_calendar(patient_query)
         screenshot_path = harness.capture_screenshot(session.screenshot_dir / "patient_bind.png")
-        active_url = harness.state.active_url or harness.current_url()
-        surface = infer_surface_from_url(active_url)
+        surface_state = harness.inspect_surface()
+        active_url = surface_state.active_url
+        surface = surface_state.surface_type
+        state.latest_surface_state = surface_state
         mark_bound_patient_context(
             state,
             bound_patient_label=patient_query,
@@ -417,8 +420,10 @@ def run_myle_bind_and_observe(task_name: str, patient_query: str, user_prompt: s
         harness.connect()
         harness.bind_patient_from_calendar(patient_query)
         screenshot_path = harness.capture_screenshot(session.screenshot_dir / "bind_and_observe.png")
-        active_url = harness.state.active_url or harness.current_url()
-        surface = infer_surface_from_url(active_url)
+        surface_state = harness.inspect_surface()
+        active_url = surface_state.active_url
+        surface = surface_state.surface_type
+        state.latest_surface_state = surface_state
         mark_bound_patient_context(
             state,
             bound_patient_label=patient_query,
@@ -533,8 +538,10 @@ def run_myle_bind_open_documents_and_observe(
         harness.bind_patient_from_calendar(patient_query)
         harness.open_current_patient_documents()
         screenshot_path = harness.capture_screenshot(session.screenshot_dir / "bind_open_documents_and_observe.png")
-        active_url = harness.state.active_url or harness.current_url()
-        surface = infer_surface_from_url(active_url)
+        surface_state = harness.inspect_surface()
+        active_url = surface_state.active_url
+        surface = surface_state.surface_type
+        state.latest_surface_state = surface_state
         mark_bound_patient_context(
             state,
             bound_patient_label=patient_query,

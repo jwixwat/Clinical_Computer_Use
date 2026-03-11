@@ -323,14 +323,21 @@ Version labels begin from **the current repo state**, not from project origin.
 
 #### N2.0 Chart surface model
 
-* [ ] Define the agent's internal map of chart surfaces:
+* [x] Define the agent's internal map of chart surfaces:
   * chart home / summary
   * Documents
   * Results
   * note/forms context
   * active document / viewer
   * patient header / identity region
-* [ ] Define allowed transitions and recovery routes between them.
+* [x] Distinguish at least the following layers when they are materially different:
+  * persistent chart shell / workspace context
+  * active content surface inside the shell
+  * overlay or modal state on top of the active surface
+  * external viewer opened from a chart surface
+  * origin / provenance context for anything opened outside the shell
+* [x] Treat shared routes such as `/patients` as insufficient on their own; local anchors and chart-local navigation should disambiguate active sub-surfaces.
+* [x] Define allowed transitions and recovery routes between them.
 * Acceptance: the agent can talk about chart surfaces as first-class concepts.
 * Complexity: **S/M**.
 
@@ -346,6 +353,7 @@ Version labels begin from **the current repo state**, not from project origin.
   * `capture_region(...)`
   * `return_to_chart_home`
 * [ ] Keep raw click / type / scroll as fallback rather than mainline.
+* [ ] Ensure the semantic tool layer can refer not only to surfaces, but also to zones / affordance classes within mixed surfaces (for example: safe read region, dangerous action region, workflow sidebar, bottom filing bar).
 * Acceptance: most read-only chart pursuit can be expressed without the model inventing selectors or arbitrary click chains.
 * Complexity: **M/L**.
 
@@ -419,6 +427,7 @@ Version labels begin from **the current repo state**, not from project origin.
   * relevance to current contract
   * reject reason
   * verification status
+* [ ] Evolve artifact identity away from purely UI-derived labels toward provenance-bearing artifact objects that remain stable across different openings, viewers, and renderings of the same underlying item.
 * [ ] Preserve artifact memory across continuation turns and resumptions.
 * Acceptance: inspected candidates become durable objects in the run, not transient screen impressions.
 * Complexity: **M/L**.
@@ -436,6 +445,7 @@ Version labels begin from **the current repo state**, not from project origin.
 * [ ] Store evidence snippets, extracted viewer text, screenshots/crops, and other artifact observations with source linkage.
 * [ ] Make every material draft/checkpoint claim point back to one or more artifacts.
 * [ ] Distinguish evidence from model interpretation.
+* [ ] Preserve parent / child provenance where relevant, for example when a patient-bound result row opens an external PDF viewer that no longer displays patient identity directly.
 * Acceptance: outputs become explainable and reviewable from chart sources.
 * Complexity: **M/L**.
 
@@ -526,6 +536,7 @@ Version labels begin from **the current repo state**, not from project origin.
 
 * [ ] Hide or mark targets that are forbidden, approval-bound, or out of current scope before they are presented to the model.
 * [ ] Make policy metadata part of the runtime state, not just an English instruction.
+* [ ] Annotate mixed surfaces at the level of meaningful zones / affordances where possible, so that "safe row open" and "dangerous file/approve control" are not treated as equivalent merely because both are visible clicks.
 * Acceptance: dangerous visible targets stop being "temptations" in the mainline action space.
 * Complexity: **M**.
 
@@ -534,6 +545,7 @@ Version labels begin from **the current repo state**, not from project origin.
 * [ ] Reclassify every requested action immediately before execution.
 * [ ] Verify that the requested step still fits the current contract, patient context, and allowed risk tier.
 * [ ] Refuse or pause when the runtime classification is stricter than the model assumed.
+* [ ] Let runtime risk depend on verb + target semantics + current surface/zone + current contract, not on the action verb alone.
 * Acceptance: the final gate to execution is policy- and context-aware.
 * Complexity: **M**.
 
@@ -586,6 +598,8 @@ Version labels begin from **the current repo state**, not from project origin.
   * current chart context summary
   * task contract summary
   * search / evidence ledger summary
+* [ ] Where surfaces are mixed-risk, package read regions, action regions, and viewer/sidebar regions distinctly rather than forcing the model to reconstruct them from one flat screenshot.
+* [ ] Include enough parent / child provenance in the bundle that external viewers and modals can still be understood in relation to the originating chart surface and artifact.
 * Acceptance: turns become consistent and easier to evaluate and improve.
 * Complexity: **M**.
 
@@ -885,6 +899,13 @@ The fastest path is to front-load:
 * artifact/evidence memory
 * verifier-gated completion
 * runtime policy enforcement
+
+In practice, that means the model should increasingly reason over:
+
+* chart shell + active sub-surface rather than raw route strings
+* provenance-bearing artifacts rather than transient UI labels
+* safe vs unsafe affordance zones inside mixed surfaces
+* bounded search state rather than isolated loop iterations
 
 Those pieces change **what the model is allowed to think with**.
 

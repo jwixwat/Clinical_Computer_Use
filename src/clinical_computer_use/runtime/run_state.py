@@ -11,6 +11,7 @@ from clinical_computer_use.config import TRACE_DIR
 from clinical_computer_use.runtime.checkpoint_policy import append_checkpoint_with_policy
 from clinical_computer_use.runtime.checkpoints import Checkpoint
 from clinical_computer_use.runtime.context_compaction import compact_run_context
+from clinical_computer_use.runtime.surfaces import ChartSurfaceState
 from clinical_computer_use.runtime.autonomy import AutonomyState
 from clinical_computer_use.runtime.ledgers import RunLedgers
 from clinical_computer_use.runtime.versioning import RunVersionBundle, build_run_version_bundle
@@ -78,6 +79,7 @@ class RunState:
     lifecycle_reason: str = ""
     version_bundle: RunVersionBundle = field(default_factory=RunVersionBundle)
     run_version: str = "n1.v2"
+    latest_surface_state: ChartSurfaceState | None = None
     last_updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat().replace("+00:00", "Z"))
 
     def to_dict(self) -> dict[str, object]:
@@ -98,6 +100,7 @@ class RunState:
             "lifecycle_reason": self.lifecycle_reason,
             "version_bundle": self.version_bundle.to_dict(),
             "run_version": self.run_version,
+            "latest_surface_state": self.latest_surface_state.to_dict() if self.latest_surface_state is not None else None,
             "last_updated_at": self.last_updated_at,
         }
 
@@ -129,6 +132,7 @@ class RunState:
         patient_payload = payload.get("bound_patient_context", {})
         version_bundle_payload = payload.get("version_bundle", {})
         autonomy_payload = payload.get("autonomy_state", {})
+        latest_surface_payload = payload.get("latest_surface_state", {})
         try:
             lifecycle_state = RunLifecycleState(str(payload.get("lifecycle_state", RunLifecycleState.ACTIVE.value)))
         except ValueError:
@@ -153,6 +157,9 @@ class RunState:
                 version_bundle_payload if isinstance(version_bundle_payload, dict) else {}
             ),
             run_version=str(payload.get("run_version", "n1.v2")),
+            latest_surface_state=ChartSurfaceState.from_dict(latest_surface_payload)
+            if isinstance(latest_surface_payload, dict) and latest_surface_payload
+            else None,
             last_updated_at=str(
                 payload.get("last_updated_at", datetime.now(UTC).isoformat().replace("+00:00", "Z"))
             ),
@@ -184,6 +191,8 @@ def save_run_state(session: SessionContext, state: RunState) -> Path:
         json.dump(state.bound_patient_context.to_dict(), handle, indent=2)
     with (path.parent / "version_bundle.json").open("w", encoding="utf-8") as handle:
         json.dump(state.version_bundle.to_dict(), handle, indent=2)
+    with (path.parent / "latest_surface_state.json").open("w", encoding="utf-8") as handle:
+        json.dump(state.latest_surface_state.to_dict() if state.latest_surface_state is not None else {}, handle, indent=2)
     with (path.parent / "lifecycle_state.json").open("w", encoding="utf-8") as handle:
         json.dump(
             {
@@ -343,6 +352,7 @@ def summarize_run_state(state: RunState) -> dict[str, object]:
         "opened_candidates": list(state.ledgers.opened_candidates),
         "last_candidate_key": state.ledgers.last_candidate_key,
         "bound_patient_context": state.bound_patient_context.to_dict(),
+        "latest_surface_state": state.latest_surface_state.to_dict() if state.latest_surface_state is not None else None,
         "autonomy_state": state.autonomy_state.to_dict(),
         "lifecycle_state": state.lifecycle_state.value,
         "lifecycle_reason": state.lifecycle_reason,

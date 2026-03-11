@@ -20,6 +20,14 @@ class SurfaceType(str, Enum):
     FORMS = "forms"
     VIEWER = "viewer"
     CALENDAR = "calendar"
+    MEDICAL_SUMMARY = "medical_summary"
+    MEDICAL_NOTE = "medical_note"
+    PATIENT_DOCUMENTS = "patient_documents"
+    PATIENT_RESULTS = "patient_results"
+    PATIENT_MEDICATION = "patient_medication"
+    RESULT_REVIEW = "result_review"
+    RESULT_DETAIL_MODAL = "result_detail_modal"
+    DOCUMENT_VIEWER_EXTERNAL = "document_viewer_external"
     UNKNOWN = "unknown"
 
 

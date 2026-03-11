@@ -41,7 +41,6 @@ from clinical_computer_use.runtime.ledgers import (
     add_evidence_record,
     add_uncertainty,
     build_empty_ledgers,
-    infer_surface_from_url,
     mark_artifact_opened,
     mark_artifact_verified,
     next_step,
@@ -51,6 +50,7 @@ from clinical_computer_use.runtime.ledgers import (
 )
 from clinical_computer_use.runtime.policy_context import build_policy_context
 from clinical_computer_use.runtime.run_brief import build_run_brief
+from clinical_computer_use.runtime.surfaces import restorable_surface_for_resume
 from clinical_computer_use.runtime.understanding import (
     build_operational_understanding_block,
     render_operational_understanding_text,
@@ -209,8 +209,10 @@ def _execute_agent_loop(
 
         for _ in range(max_steps):
             step = next_step(run_state.ledgers)
-            active_url = harness.current_url()
-            surface = infer_surface_from_url(active_url)
+            surface_state = harness.inspect_surface()
+            active_url = surface_state.active_url
+            surface = surface_state.surface_type
+            run_state.latest_surface_state = surface_state
             understanding_block = build_operational_understanding_block(
                 run_state,
                 next_safest_actions=["continue_search", "checkpoint_to_user"],
@@ -280,7 +282,7 @@ def _execute_agent_loop(
                 )
                 restored = harness.restore_surface_for_resume(resume_required_surface)
                 if restored:
-                    restored_surface = infer_surface_from_url(harness.current_url())
+                    restored_surface = harness.inspect_surface().surface_type
                     if restored_surface == resume_required_surface:
                         append_event(
                             session,
@@ -750,7 +752,11 @@ def continue_myle_agent_task(session_id: str, max_steps: int = 8) -> InChartAgen
         raise RuntimeError("Cannot continue run without patient_target in task contract.")
 
     last_episode = run_state.ledgers.search_episodes[-1] if run_state.ledgers.search_episodes else None
-    required_surface = last_episode.surface if last_episode is not None else None
+    required_surface = (
+        restorable_surface_for_resume(last_episode.surface)
+        if last_episode is not None
+        else None
+    )
 
     append_event(
         session,

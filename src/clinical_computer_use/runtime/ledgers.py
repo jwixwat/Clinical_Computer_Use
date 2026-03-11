@@ -3,26 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from urllib.parse import urlparse
 
 from clinical_computer_use.schemas.contract_types import ArtifactClass, SurfaceType
+from clinical_computer_use.runtime.surfaces import coarse_surface, resolve_surface_from_url
 
 
 def infer_surface_from_url(url: str) -> SurfaceType:
-    normalized = (url or "").lower()
-    if "documents" in normalized:
-        return SurfaceType.DOCUMENTS
-    if "results" in normalized:
-        return SurfaceType.RESULTS
-    if "calendar" in normalized:
-        return SurfaceType.CALENDAR
-    if "viewer" in normalized:
-        return SurfaceType.VIEWER
-    if "forms" in normalized:
-        return SurfaceType.FORMS
-    if urlparse(normalized).path in ("", "/"):
-        return SurfaceType.CHART_HOME
-    return SurfaceType.UNKNOWN
+    return resolve_surface_from_url(url).surface_type
 
 
 def candidate_key(candidate: dict[str, str]) -> str:
@@ -391,7 +378,7 @@ def unresolved_higher_priority_candidates(ledgers: RunLedgers, preferred_surface
             continue
         if record.rejected_reason:
             continue
-        priority = rank.get(record.source_surface, len(preferred_surfaces) + 1)
+        priority = rank.get(record.source_surface, rank.get(coarse_surface(record.source_surface), len(preferred_surfaces) + 1))
         unresolved.append((priority, key))
     unresolved.sort(key=lambda item: item[0])
     return [key for _, key in unresolved]
